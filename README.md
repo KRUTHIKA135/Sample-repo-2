@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/pkg/v2/common/middlewares"
+	"github.com/LatitudeFinancial/pkg/v2/common/middlewares"
 )
 
 func Middleware() middlewares.Middleware {
@@ -17,19 +17,22 @@ func Middleware() middlewares.Middleware {
 				return
 			}
 
-			if !strings.HasPrefix(authHeader, "Bearer ") {
-				http.Error(w, "invalid authorization header", http.StatusUnauthorized)
+			// JWT (Cognito / future)
+			if strings.HasPrefix(authHeader, "Bearer ") {
+				next.ServeHTTP(w, r)
 				return
 			}
 
-			// DO NOT validate, DO NOT verify, DO NOT decode
-			// Just pass request forward
-			next.ServeHTTP(w, r)
+			// Okta machine token (current)
+			if strings.HasPrefix(authHeader, "SSWS ") {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			http.Error(w, "unsupported authorization type", http.StatusUnauthorized)
 		})
 	}
 }
-
-
 
 
 
