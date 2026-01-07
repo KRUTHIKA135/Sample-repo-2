@@ -3,11 +3,11 @@ package auth
 import (
 	"net/http"
 
-	jwtAuth "github.com/L/auth"
-	"github.com/Ll/applybuy-pkg/pkg/middleware/auth/machinetoken"
-	"github.com/Laal/applybuy-token-service/internal/config"
-	"github.com/Latitual/pkg/v2/common/logger"
-	"github.com/Latncial/pkg/v2/common/middlewares"
+	jwtAuth "github.com/LatitudeFiial/auth"
+	"github.com/Latitucial/applybuy-pkg/pkg/middleware/auth/machinetoken"
+	"github.com/Latitucial/applybuy-token-service/internal/config"
+	"github.com/Laial/pkg/v2/common/logger"
+	"github.com/Latitudel/pkg/v2/common/middlewares"
 )
 
 func Middleware(
@@ -25,7 +25,7 @@ func Middleware(
 					jwtAuth.ScopeConfig{
 						AcceptedScopes: requiredScopes,
 					},
-					appContext.JwtFetcher(),
+					appContext.JwtFetcher(), // ✅ METHOD CALL (this is correct for token-service)
 				)
 
 				authMiddleware(next).ServeHTTP(w, r)
@@ -36,7 +36,7 @@ func Middleware(
 			oktaMiddleware := machinetoken.Middleware(
 				machinetoken.Config{
 					ForwardToNextMiddleware: false,
-					RequiredScopes:          []string{}, // reviewer explicitly asked to keep empty
+					RequiredScopes:          []string{}, // reviewer asked to keep empty
 					OnError: func(err error) {
 						logger.
 							WithField("path", r.URL.Path).
