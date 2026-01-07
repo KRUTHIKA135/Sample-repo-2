@@ -34,3 +34,18 @@ func AuthMiddleware(
 		})
 	}
 }
+
+
+
+
+
+auth.ContextAwareAuthMiddleware(
+	container,
+	[]string{okta.TokenScopePaymentWrite},
+)
+
+
+auth.ContextAwareAuthMiddleware(
+	container,
+	[]string{okta.TokenScopeProfileRead},
+)
