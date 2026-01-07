@@ -49,3 +49,13 @@ auth.ContextAwareAuthMiddleware(
 	container,
 	[]string{okta.TokenScopeProfileRead},
 )
+
+
+
+
+Middlewares: []middlewares.Middleware{
+	auth.ContextAwareAuthMiddleware(
+		container,
+		[]string{okta.TokenScopePaymentWrite},
+	),
+},
