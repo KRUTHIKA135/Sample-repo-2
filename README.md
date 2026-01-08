@@ -1,4 +1,5 @@
 openapi: "3.0.3"
+
 info:
   title: Apply & Buy Token Service
   version: 1.0.0
@@ -12,16 +13,8 @@ paths:
       summary: Get delegate
       operationId: getDelegate
       parameters:
-        - name: X-Correlation-Id
-          in: header
-          required: false
-          schema:
-            type: string
-        - name: X-Auth-Type
-          in: header
-          required: false
-          schema:
-            type: string
+        - $ref: '#/components/parameters/XCorrelationId'
+        - $ref: '#/components/parameters/XAuthType'
       responses:
         "200":
           description: Success
@@ -30,7 +23,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/DelegateResponse'
       security:
-        - oauth2: []
+        - oauth2:
+            - applybuy-token-service:profile:read
 
     post:
       summary: Create delegate
@@ -52,7 +46,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/DelegateResponse'
       security:
-        - oauth2: []
+        - oauth2:
+            - applybuy-token-service:profile:write
 
     delete:
       summary: Delete delegate
@@ -68,7 +63,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/MessageResponse'
       security:
-        - oauth2: []
+        - oauth2:
+            - applybuy-token-service:profile:write
 
   /profile:
     get:
@@ -85,7 +81,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProfileResponse'
       security:
-        - oauth2: []
+        - oauth2:
+            - applybuy-token-service:profile:read
 
     post:
       summary: Create profile
@@ -107,7 +104,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProfileResponse'
       security:
-        - oauth2: []
+        - oauth2:
+            - applybuy-token-service:profile:write
 
     delete:
       summary: Delete profile
@@ -123,7 +121,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/MessageResponse'
       security:
-        - oauth2: []
+        - oauth2:
+            - applybuy-token-service:profile:write
 
   /profile/validate:
     post:
@@ -140,7 +139,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/ValidationResponse'
       security:
-        - oauth2: []
+        - oauth2:
+            - applybuy-token-service:profile:read
 
   /purchase:
     post:
@@ -163,7 +163,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaymentResponse'
       security:
-        - oauth2: []
+        - oauth2:
+            - applybuy-token-service:payment:write
 
 components:
   parameters:
@@ -173,6 +174,7 @@ components:
       required: false
       schema:
         type: string
+
     XAuthType:
       name: X-Auth-Type
       in: header
@@ -186,42 +188,48 @@ components:
       properties:
         message:
           type: string
-      required: [message]
+      required:
+        - message
 
     DelegateRequest:
       type: object
       properties:
         delegateId:
           type: string
-      required: [delegateId]
+      required:
+        - delegateId
 
     DelegateResponse:
       type: object
       properties:
         result:
           type: string
-      required: [result]
+      required:
+        - result
 
     ProfileRequest:
       type: object
       properties:
         profileId:
           type: string
-      required: [profileId]
+      required:
+        - profileId
 
     ProfileResponse:
       type: object
       properties:
         result:
           type: string
-      required: [result]
+      required:
+        - result
 
     ValidationResponse:
       type: object
       properties:
         valid:
           type: boolean
-      required: [valid]
+      required:
+        - valid
 
     PurchaseRequest:
       type: object
@@ -230,14 +238,17 @@ components:
           type: integer
         currency:
           type: string
-      required: [amount, currency]
+      required:
+        - amount
+        - currency
 
     PaymentResponse:
       type: object
       properties:
         status:
           type: string
-      required: [status]
+      required:
+        - status
 
   securitySchemes:
     oauth2:
@@ -245,4 +256,7 @@ components:
       flows:
         implicit:
           authorizationUrl: https://api.example.com/oauth2/token
-          scopes: {}
+          scopes:
+            applybuy-token-service:profile:read: Read profile and delegate data
+            applybuy-token-service:profile:write: Create or delete profile and delegate data
+            applybuy-token-service:payment:write: Create purchase transactions
