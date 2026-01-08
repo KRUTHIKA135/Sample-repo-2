@@ -1,61 +1,248 @@
-func AuthMiddleware(
-	appConfig *config.ApplicationConfig,
-	requiredScopes []string, // passed from routes
-) middlewares.Middleware {
+openapi: "3.0.3"
+info:
+  title: Apply & Buy Token Service
+  version: 1.0.0
 
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+servers:
+  - url: https://api.example.com/v1
 
-			var authMiddleware middlewares.Middleware
+paths:
+  /delegate:
+    get:
+      summary: Get delegate
+      operationId: getDelegate
+      parameters:
+        - name: X-Correlation-Id
+          in: header
+          required: false
+          schema:
+            type: string
+        - name: X-Auth-Type
+          in: header
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DelegateResponse'
+      security:
+        - oauth2: []
 
-			if r.Header.Get("X-Auth-Type") != "" {
-				// JWT path (Cognito)
-				authMiddleware = jwtauth.NewAuthMiddleware(
-					appConfig.JwtFetcher(),
-					jwtauth.ScopeConfig{
-						AcceptedScopes: requiredScopes,
-					},
-				)
-			} else {
-				// Okta fallback (scope-agnostic here)
-				authMiddleware = machinetoken.Middleware(
-					machinetoken.Config{
-						ForwardToNextMiddleware: false,
-						RequiredScopes:          nil,
-						OnError: func(err error) {
-							logger.WithField("path", r.URL.Path).
-								Infof("error from middleware: %v", err)
-						},
-					},
-				)
-			}
+    post:
+      summary: Create delegate
+      operationId: createDelegate
+      parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+        - $ref: '#/components/parameters/XAuthType'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DelegateRequest'
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DelegateResponse'
+      security:
+        - oauth2: []
 
-			authMiddleware(next).ServeHTTP(w, r)
-		})
-	}
-}
+    delete:
+      summary: Delete delegate
+      operationId: deleteDelegate
+      parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+        - $ref: '#/components/parameters/XAuthType'
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+      security:
+        - oauth2: []
 
+  /profile:
+    get:
+      summary: Get profile
+      operationId: getProfile
+      parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+        - $ref: '#/components/parameters/XAuthType'
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileResponse'
+      security:
+        - oauth2: []
 
+    post:
+      summary: Create profile
+      operationId: createProfile
+      parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+        - $ref: '#/components/parameters/XAuthType'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileRequest'
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileResponse'
+      security:
+        - oauth2: []
 
+    delete:
+      summary: Delete profile
+      operationId: deleteProfile
+      parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+        - $ref: '#/components/parameters/XAuthType'
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+      security:
+        - oauth2: []
 
+  /profile/validate:
+    post:
+      summary: Validate profile
+      operationId: validateProfile
+      parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+        - $ref: '#/components/parameters/XAuthType'
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResponse'
+      security:
+        - oauth2: []
 
-auth.ContextAwareAuthMiddleware(
-	container,
-	[]string{okta.TokenScopePaymentWrite},
-)
+  /purchase:
+    post:
+      summary: Create purchase
+      operationId: createPurchase
+      parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+        - $ref: '#/components/parameters/XAuthType'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseRequest'
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+      security:
+        - oauth2: []
 
+components:
+  parameters:
+    XCorrelationId:
+      name: X-Correlation-Id
+      in: header
+      required: false
+      schema:
+        type: string
+    XAuthType:
+      name: X-Auth-Type
+      in: header
+      required: false
+      schema:
+        type: string
 
-auth.ContextAwareAuthMiddleware(
-	container,
-	[]string{okta.TokenScopeProfileRead},
-)
+  schemas:
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required: [message]
 
+    DelegateRequest:
+      type: object
+      properties:
+        delegateId:
+          type: string
+      required: [delegateId]
 
+    DelegateResponse:
+      type: object
+      properties:
+        result:
+          type: string
+      required: [result]
 
+    ProfileRequest:
+      type: object
+      properties:
+        profileId:
+          type: string
+      required: [profileId]
 
-Middlewares: []middlewares.Middleware{
-	auth.ContextAwareAuthMiddleware(
-		container,
-		[]string{okta.TokenScopePaymentWrite},
-	),
-},
+    ProfileResponse:
+      type: object
+      properties:
+        result:
+          type: string
+      required: [result]
+
+    ValidationResponse:
+      type: object
+      properties:
+        valid:
+          type: boolean
+      required: [valid]
+
+    PurchaseRequest:
+      type: object
+      properties:
+        amount:
+          type: integer
+        currency:
+          type: string
+      required: [amount, currency]
+
+    PaymentResponse:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://api.example.com/oauth2/token
+          scopes: {}
