@@ -1,62 +1,369 @@
-import (
-    "context"
-    "fmt"
-    "strings"
+openapi: "3.0.3"
 
-    "github.com/aws/aws-lambda-go/events"
-    "github.com/aws/aws-sdk-go/service/ssm"
+info:
+  title: Apply & Buy Checkout Service
+  version: 1.0.0
 
-    "github.com/LatitudeFinancial/applybuy-merchant-ddb-stream/internal/core"
-    "github.com/LatitudeFinancial/applybuy-merchant-ddb-stream/pkg/logger"
-    "github.com/LatitudeFinancial/applybuy-payment-service/pkg/adminclient"
+servers:
+  - url: https://api.example.com/v1
 
-    commonlogger "github.com/LatitudeFinancial/pkg/v2/common/logger"
-)
+security:
+  - oauth2: []
 
+paths:
 
+  /redirect:
+    get:
+      summary: Redirect info
+      operationId: redirectInfo
+      tags: [Redirect]
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RedirectInfoResponse'
+        "500":
+          description: Error
 
-resp, callErr := paymentClient.PostAdminTransactionOverview(
-    ctx,
-    &txParams,
-    payload,
-)
+  /refund:
+    post:
+      summary: Create refund
+      operationId: postRefund
+      tags: [Refund, Payments]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefundRequest'
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefundResponse'
+      security:
+        - oauth2:
+            - core.UserClaimOrdersUpdate
 
-if callErr != nil || resp == nil || resp.StatusCode >= 400 {
-    if resp != nil && resp.Body != nil {
-        resp.Body.Close()
-    }
-    log.Errorf(
-        "failed to send transaction overview to payment service: %v",
-        callErr,
-    )
-    continue
-}
+  /refund/{transactionId}/{refundId}:
+    get:
+      summary: Get refund by refund ID
+      operationId: getRefundByRefundID
+      tags: [Refund, Payments]
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: refundId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefundResponse'
+      security:
+        - oauth2:
+            - core.UserClaimOrdersRead
 
-if resp.Body != nil {
-    resp.Body.Close()
-}
+  /refund/{transactionId}:
+    get:
+      summary: Get refunds by transaction
+      operationId: getRefundsByTransaction
+      tags: [Refund, Payments]
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefundListResponse'
+      security:
+        - oauth2:
+            - core.UserClaimOrdersRead
 
-log.Infof(
-    "successfully upserted transaction details for merchant id [%s] and ref [%s]",
-    payload.MerchantId,
-    payload.Ref,
-)
+  /shopify/authorize:
+    get:
+      summary: Shopify authorize (GET)
+      operationId: shopifyAuthorizeGet
+      tags: [Shopify]
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShopifyAuthorizeResponse'
 
+    post:
+      summary: Shopify authorize (POST)
+      operationId: shopifyAuthorizePost
+      tags: [Shopify]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShopifyAuthorizeRequest'
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShopifyAuthorizeResponse'
 
-func main() {
-    container, err := core.NewContainer()
-    if err != nil {
-        panic(fmt.Errorf("unable to load config, %w", err))
-    }
+  /shopify/token:
+    get:
+      summary: Get Shopify token
+      operationId: shopifyTokenGet
+      tags: [Shopify]
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShopifyTokenResponse'
 
-    awsSession := session.Must(session.NewSession())
-    ssmClient := ssm.New(awsSession)
+  /shopify/shop/erase:
+    post:
+      summary: GDPR shop erase
+      operationId: shopifyShopDataErase
+      tags: [Shopify, GDPR]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GDPRShopEraseRequest'
+      responses:
+        "202":
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GDPRShopEraseResponse'
 
-    paymentClient := newPaymentServiceHTTPClient(context.Background(), container)
+  /shopify/customer/erase:
+    post:
+      summary: GDPR customer erase
+      operationId: shopifyCustomerDataErase
+      tags: [Shopify, GDPR]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GDPRCustomerEraseRequest'
+      responses:
+        "202":
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GDPRCustomerEraseResponse'
 
-    lambda.Start(Handler(container, ssmClient, paymentClient))
-}
+  /shopify/customer/read:
+    post:
+      summary: GDPR customer read
+      operationId: shopifyCustomerDataRead
+      tags: [Shopify, GDPR]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GDPRCustomerReadRequest'
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GDPRCustomerReadResponse'
 
+  /transactions/search:
+    get:
+      summary: Search transaction summaries
+      operationId: transactionSummarySearch
+      tags: [Transactions, Summary]
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string }
+        - name: page
+          in: query
+          schema: { type: integer }
+        - name: limit
+          in: query
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionSummarySearchResponse'
+      security:
+        - oauth2:
+            - core.UserClaimOrdersRead
 
+  /transactions/{transactionId}:
+    get:
+      summary: Get transaction summary by ID
+      operationId: transactionSummaryGetByTransactionID
+      tags: [Transactions, Summary]
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionSummaryResponse'
+      security:
+        - oauth2:
+            - core.UserClaimOrdersRead
 
+  /transactions:
+    get:
+      summary: List transactions by merchant
+      operationId: transactionListByMerchant
+      tags: [Transactions]
+      parameters:
+        - name: merchantId
+          in: query
+          required: true
+          schema: { type: string }
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: page
+          in: query
+          schema: { type: integer }
+        - name: limit
+          in: query
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionsListResponse'
+      security:
+        - oauth2:
+            - oktaToken.checkoutScopeReadService
 
+  /void:
+    post:
+      summary: Void payment
+      operationId: postVoid
+      tags: [Payments, Void]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VoidRequest'
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoidResponse'
+      security:
+        - oauth2:
+            - core.UserClaimOrdersUpdate
+
+  /webhook/management:
+    post:
+      summary: Webhook order management
+      operationId: webhookOrderManagement
+      tags: [Webhook, Management]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookOrderManagementRequest'
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookOrderManagementResponse'
+      security:
+        - oauth2:
+            - okta.checkoutScopeWriteService
+
+components:
+
+  schemas:
+    RedirectInfoResponse: { type: object }
+    RefundRequest: { type: object }
+    RefundResponse: { type: object }
+    RefundListResponse: { type: object }
+
+    ShopifyAuthorizeRequest: { type: object }
+    ShopifyAuthorizeResponse: { type: object }
+    ShopifyTokenResponse: { type: object }
+
+    GDPRShopEraseRequest: { type: object }
+    GDPRShopEraseResponse: { type: object }
+    GDPRCustomerEraseRequest: { type: object }
+    GDPRCustomerEraseResponse: { type: object }
+    GDPRCustomerReadRequest: { type: object }
+    GDPRCustomerReadResponse: { type: object }
+
+    TransactionSummarySearchResponse: { type: object }
+    TransactionSummaryResponse: { type: object }
+    TransactionsListResponse: { type: object }
+
+    VoidRequest: { type: object }
+    VoidResponse: { type: object }
+
+    WebhookOrderManagementRequest: { type: object }
+    WebhookOrderManagementResponse: { type: object }
+
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://api.example.com/oauth2/token
+          scopes:
+            core.UserClaimOrdersRead: Orders read
+            core.UserClaimOrdersUpdate: Orders update
+            oktaToken.checkoutScopeReadService: Checkout read
+            okta.checkoutScopeWriteService: Checkout write
