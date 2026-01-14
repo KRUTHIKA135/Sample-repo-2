@@ -17,6 +17,7 @@ paths:
       summary: Redirect info
       operationId: redirectInfo
       tags: [Redirect]
+      security: []   # public redirect
       responses:
         "200":
           description: Success
@@ -47,7 +48,7 @@ paths:
                 $ref: '#/components/schemas/RefundResponse'
       security:
         - oauth2:
-            - core.UserClaimOrdersUpdate
+            - applybuy-checkout-service:payments:write
 
   /refund/{transactionId}/{refundId}:
     get:
@@ -58,13 +59,11 @@ paths:
         - name: transactionId
           in: path
           required: true
-          schema:
-            type: string
+          schema: { type: string }
         - name: refundId
           in: path
           required: true
-          schema:
-            type: string
+          schema: { type: string }
       responses:
         "200":
           description: Success
@@ -74,7 +73,7 @@ paths:
                 $ref: '#/components/schemas/RefundResponse'
       security:
         - oauth2:
-            - core.UserClaimOrdersRead
+            - applybuy-checkout-service:payments:read
 
   /refund/{transactionId}:
     get:
@@ -85,8 +84,7 @@ paths:
         - name: transactionId
           in: path
           required: true
-          schema:
-            type: string
+          schema: { type: string }
       responses:
         "200":
           description: Success
@@ -96,7 +94,7 @@ paths:
                 $ref: '#/components/schemas/RefundListResponse'
       security:
         - oauth2:
-            - core.UserClaimOrdersRead
+            - applybuy-checkout-service:payments:read
 
   /shopify/authorize:
     get:
@@ -110,6 +108,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ShopifyAuthorizeResponse'
+      security:
+        - oauth2:
+            - applybuy-checkout-service:shopify:read
 
     post:
       summary: Shopify authorize (POST)
@@ -128,6 +129,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ShopifyAuthorizeResponse'
+      security:
+        - oauth2:
+            - applybuy-checkout-service:shopify:write
 
   /shopify/token:
     get:
@@ -141,6 +145,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ShopifyTokenResponse'
+      security:
+        - oauth2:
+            - applybuy-checkout-service:shopify:read
 
   /shopify/shop/erase:
     post:
@@ -160,6 +167,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GDPRShopEraseResponse'
+      security:
+        - oauth2:
+            - applybuy-checkout-service:gdpr:write
 
   /shopify/customer/erase:
     post:
@@ -179,6 +189,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GDPRCustomerEraseResponse'
+      security:
+        - oauth2:
+            - applybuy-checkout-service:gdpr:write
 
   /shopify/customer/read:
     post:
@@ -198,6 +211,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GDPRCustomerReadResponse'
+      security:
+        - oauth2:
+            - applybuy-checkout-service:gdpr:read
 
   /transactions/search:
     get:
@@ -223,7 +239,7 @@ paths:
                 $ref: '#/components/schemas/TransactionSummarySearchResponse'
       security:
         - oauth2:
-            - core.UserClaimOrdersRead
+            - applybuy-checkout-service:transactions:read
 
   /transactions/{transactionId}:
     get:
@@ -244,7 +260,7 @@ paths:
                 $ref: '#/components/schemas/TransactionSummaryResponse'
       security:
         - oauth2:
-            - core.UserClaimOrdersRead
+            - applybuy-checkout-service:transactions:read
 
   /transactions:
     get:
@@ -258,14 +274,10 @@ paths:
           schema: { type: string }
         - name: from
           in: query
-          schema:
-            type: string
-            format: date-time
+          schema: { type: string, format: date-time }
         - name: to
           in: query
-          schema:
-            type: string
-            format: date-time
+          schema: { type: string, format: date-time }
         - name: page
           in: query
           schema: { type: integer }
@@ -281,7 +293,7 @@ paths:
                 $ref: '#/components/schemas/TransactionsListResponse'
       security:
         - oauth2:
-            - oktaToken.checkoutScopeReadService
+            - applybuy-checkout-service:transactions:read
 
   /void:
     post:
@@ -303,7 +315,7 @@ paths:
                 $ref: '#/components/schemas/VoidResponse'
       security:
         - oauth2:
-            - core.UserClaimOrdersUpdate
+            - applybuy-checkout-service:payments:write
 
   /webhook/management:
     post:
@@ -325,12 +337,13 @@ paths:
                 $ref: '#/components/schemas/WebhookOrderManagementResponse'
       security:
         - oauth2:
-            - okta.checkoutScopeWriteService
+            - applybuy-checkout-service:webhook:write
 
 components:
 
   schemas:
     RedirectInfoResponse: { type: object }
+
     RefundRequest: { type: object }
     RefundResponse: { type: object }
     RefundListResponse: { type: object }
@@ -363,7 +376,11 @@ components:
         clientCredentials:
           tokenUrl: https://api.example.com/oauth2/token
           scopes:
-            core.UserClaimOrdersRead: Orders read
-            core.UserClaimOrdersUpdate: Orders update
-            oktaToken.checkoutScopeReadService: Checkout read
-            okta.checkoutScopeWriteService: Checkout write
+            applybuy-checkout-service:payments:read: Read payments
+            applybuy-checkout-service:payments:write: Modify payments
+            applybuy-checkout-service:transactions:read: Read transactions
+            applybuy-checkout-service:shopify:read: Read Shopify data
+            applybuy-checkout-service:shopify:write: Modify Shopify auth
+            applybuy-checkout-service:gdpr:read: Read GDPR data
+            applybuy-checkout-service:gdpr:write: Modify GDPR data
+            applybuy-checkout-service:webhook:write: Webhook management
