@@ -1,3 +1,451 @@
+
+
+
+openapi: "3.0.3"
+
+info:
+  title: Apply & Buy Checkout Service
+  version: 1.0.0
+
+servers:
+  - url: https://api.example.com/v1
+
+security:
+  - oauth2: []
+
+paths:
+
+  ### 1) accounts
+  /accounts/profile/by-email:
+    get:
+      summary: Get account profile by email
+      operationId: getAccountProfileByEmail
+      tags: [Accounts]
+      parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+        - $ref: '#/components/parameters/XAuthType'
+        - name: email
+          in: query
+          required: true
+          schema:
+            type: string
+            format: email
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileListResponse'
+      security:
+        - oauth2:
+            - applybuy-checkout-service:accounts:read
+
+  /accounts/profile/training-attended:
+    post:
+      summary: Update training attended
+      operationId: updateAccountProfileTrainingAttended
+      tags: [Accounts]
+      parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+        - $ref: '#/components/parameters/XAuthType'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrainingAttendedUpdateRequest'
+      responses:
+        "200":
+          description: Success
+      security:
+        - oauth2:
+            - applybuy-checkout-service:accounts:write
+
+  ### 2) admin
+  /admin/merchant:
+    post:
+      summary: Create merchant
+      operationId: adminCreateMerchant
+      tags: [Admin]
+      parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMerchantRequest'
+      responses:
+        "201":
+          description: Created
+      security:
+        - oauth2:
+            - applybuy-checkout-service:admin:write
+
+  ### 3) cancel
+  /cancel:
+    post:
+      summary: Cancel payment
+      operationId: postCancel
+      tags: [Payments, Cancel]
+      parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+        - $ref: '#/components/parameters/XAuthType'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelRequest'
+      responses:
+        "200":
+          description: Success
+      security:
+        - oauth2:
+            - applybuy-checkout-service:payments:write
+
+  ### 4) capture
+  /capture:
+    post:
+      summary: Capture payment
+      operationId: postCapture
+      tags: [Payments, Capture]
+      parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+        - $ref: '#/components/parameters/XAuthType'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaptureRequest'
+      responses:
+        "200":
+          description: Success
+      security:
+        - oauth2:
+            - applybuy-checkout-service:payments:write
+
+  ### 5) customer
+  /customer/transactions:
+    get:
+      summary: Get customer transactions
+      operationId: customerGetTransactions
+      tags: [Customer, Transactions]
+      parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+      responses:
+        "200":
+          description: Success
+      security:
+        - oauth2:
+            - applybuy-checkout-service:customer:read
+
+  ### 6) dev
+  /dev/test-email:
+    get:
+      summary: Dev test email
+      operationId: devTestEmail
+      tags: [Dev]
+      responses:
+        "200":
+          description: Success
+      security:
+        - oauth2:
+            - applybuy-checkout-service:dev:read
+
+  ### 7) health
+  /health:
+    get:
+      summary: Health check
+      operationId: healthCheck
+      tags: [Health]
+      security: []
+      responses:
+        "200":
+          description: OK
+
+  ### 8) merchant
+  /merchant:
+    get:
+      summary: Get merchant
+      operationId: getMerchant
+      tags: [Merchant]
+      parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+      responses:
+        "200":
+          description: Success
+      security:
+        - oauth2:
+            - applybuy-checkout-service:merchant:read
+
+  ### 9) order
+  /order:
+    get:
+      summary: Get order
+      operationId: getOrder
+      tags: [Orders]
+      parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+      responses:
+        "200":
+          description: Success
+      security:
+        - oauth2:
+            - applybuy-checkout-service:orders:read
+
+  ### 10) payment
+  /payment/embed:
+    get:
+      summary: Payment embed
+      operationId: paymentEmbed
+      tags: [Payment]
+      responses:
+        "200":
+          description: Success
+
+  ### 11) private
+  /private/merchants:
+    get:
+      summary: Private get merchants
+      operationId: privateGetMerchants
+      tags: [Private]
+      parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+      responses:
+        "200":
+          description: Success
+      security:
+        - oauth2:
+            - applybuy-checkout-service:private:read
+
+  ### 12) products
+  /products:
+    post:
+      summary: Create products
+      operationId: createProducts
+      tags: [Products]
+      parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCreateRequest'
+      responses:
+        "201":
+          description: Created
+      security:
+        - oauth2:
+            - applybuy-checkout-service:products:write
+
+  ### 13) promotions
+  /promotions:
+    get:
+      summary: Get promotions
+      operationId: getMerchantPromotions
+      tags: [Promotions]
+      parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+      responses:
+        "200":
+          description: Success
+      security:
+        - oauth2:
+            - applybuy-checkout-service:promotions:read
+
+  ### 14) purchase
+  /purchase:
+    post:
+      summary: Create purchase
+      operationId: purchaseCreate
+      tags: [Purchase]
+      parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseRequest'
+      responses:
+        "201":
+          description: Created
+      security:
+        - oauth2:
+            - applybuy-checkout-service:purchase:write
+
+  ### 15) redirect
+  /redirect:
+    get:
+      summary: Redirect info
+      operationId: redirectInfo
+      tags: [Redirect]
+      security: []
+      responses:
+        "200":
+          description: Success
+
+  ### 16) refund
+  /refund:
+    post:
+      summary: Create refund
+      operationId: postRefund
+      tags: [Refund]
+      parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+        - $ref: '#/components/parameters/XAuthType'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefundRequest'
+      responses:
+        "200":
+          description: Success
+      security:
+        - oauth2:
+            - applybuy-checkout-service:payments:write
+
+  ### 17) shopify
+  /shopify/authorize:
+    get:
+      summary: Shopify authorize
+      operationId: shopifyAuthorizeGet
+      tags: [Shopify]
+      responses:
+        "200":
+          description: Success
+      security:
+        - oauth2:
+            - applybuy-checkout-service:shopify:read
+
+  ### 18) transaction
+  /transactions:
+    get:
+      summary: List transactions
+      operationId: transactionList
+      tags: [Transactions]
+      parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+      responses:
+        "200":
+          description: Success
+      security:
+        - oauth2:
+            - applybuy-checkout-service:transactions:read
+
+  ### 19) void
+  /void:
+    post:
+      summary: Void payment
+      operationId: postVoid
+      tags: [Void]
+      parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VoidRequest'
+      responses:
+        "200":
+          description: Success
+      security:
+        - oauth2:
+            - applybuy-checkout-service:payments:write
+
+  ### 20) webhookManagement
+  /webhook/management:
+    post:
+      summary: Webhook management
+      operationId: webhookOrderManagement
+      tags: [Webhook]
+      parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookOrderManagementRequest'
+      responses:
+        "200":
+          description: Success
+      security:
+        - oauth2:
+            - applybuy-checkout-service:webhook:write
+
+components:
+
+  parameters:
+    XCorrelationId:
+      name: X-Correlation-Id
+      in: header
+      required: false
+      schema:
+        type: string
+
+    XAuthType:
+      name: X-Auth-Type
+      in: header
+      required: false
+      schema:
+        type: string
+
+  schemas:
+    ProfileListResponse: { type: object }
+    TrainingAttendedUpdateRequest: { type: object }
+    CreateMerchantRequest: { type: object }
+    CancelRequest: { type: object }
+    CaptureRequest: { type: object }
+    ProductCreateRequest: { type: object }
+    PurchaseRequest: { type: object }
+    RefundRequest: { type: object }
+    VoidRequest: { type: object }
+    WebhookOrderManagementRequest: { type: object }
+
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://api.example.com/oauth2/token
+          scopes:
+            applybuy-checkout-service:accounts:read: Accounts read
+            applybuy-checkout-service:accounts:write: Accounts write
+            applybuy-checkout-service:admin:write: Admin write
+            applybuy-checkout-service:payments:read: Payments read
+            applybuy-checkout-service:payments:write: Payments write
+            applybuy-checkout-service:transactions:read: Transactions read
+            applybuy-checkout-service:merchant:read: Merchant read
+            applybuy-checkout-service:orders:read: Orders read
+            applybuy-checkout-service:products:write: Products write
+            applybuy-checkout-service:promotions:read: Promotions read
+            applybuy-checkout-service:purchase:write: Purchase write
+            applybuy-checkout-service:shopify:read: Shopify read
+            applybuy-checkout-service:webhook:write: Webhook write
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 openapi: "3.0.3"
 
 info:
