@@ -33,6 +33,9 @@ paths:
       summary: Create refund
       operationId: postRefund
       tags: [Refund, Payments]
+      parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+        - $ref: '#/components/parameters/XAuthType'
       requestBody:
         required: true
         content:
@@ -56,14 +59,18 @@ paths:
       operationId: getRefundByRefundID
       tags: [Refund, Payments]
       parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+        - $ref: '#/components/parameters/XAuthType'
         - name: transactionId
           in: path
           required: true
-          schema: { type: string }
+          schema:
+            type: string
         - name: refundId
           in: path
           required: true
-          schema: { type: string }
+          schema:
+            type: string
       responses:
         "200":
           description: Success
@@ -81,10 +88,13 @@ paths:
       operationId: getRefundsByTransaction
       tags: [Refund, Payments]
       parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+        - $ref: '#/components/parameters/XAuthType'
         - name: transactionId
           in: path
           required: true
-          schema: { type: string }
+          schema:
+            type: string
       responses:
         "200":
           description: Success
@@ -101,6 +111,9 @@ paths:
       summary: Shopify authorize (GET)
       operationId: shopifyAuthorizeGet
       tags: [Shopify]
+      parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+        - $ref: '#/components/parameters/XAuthType'
       responses:
         "200":
           description: Success
@@ -116,6 +129,9 @@ paths:
       summary: Shopify authorize (POST)
       operationId: shopifyAuthorizePost
       tags: [Shopify]
+      parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+        - $ref: '#/components/parameters/XAuthType'
       requestBody:
         required: true
         content:
@@ -138,6 +154,9 @@ paths:
       summary: Get Shopify token
       operationId: shopifyTokenGet
       tags: [Shopify]
+      parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+        - $ref: '#/components/parameters/XAuthType'
       responses:
         "200":
           description: Success
@@ -154,6 +173,9 @@ paths:
       summary: GDPR shop erase
       operationId: shopifyShopDataErase
       tags: [Shopify, GDPR]
+      parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+        - $ref: '#/components/parameters/XAuthType'
       requestBody:
         required: true
         content:
@@ -171,119 +193,37 @@ paths:
         - oauth2:
             - applybuy-checkout-service:gdpr:write
 
-  /shopify/customer/erase:
-    post:
-      summary: GDPR customer erase
-      operationId: shopifyCustomerDataErase
-      tags: [Shopify, GDPR]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GDPRCustomerEraseRequest'
-      responses:
-        "202":
-          description: Accepted
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GDPRCustomerEraseResponse'
-      security:
-        - oauth2:
-            - applybuy-checkout-service:gdpr:write
-
-  /shopify/customer/read:
-    post:
-      summary: GDPR customer read
-      operationId: shopifyCustomerDataRead
-      tags: [Shopify, GDPR]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GDPRCustomerReadRequest'
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GDPRCustomerReadResponse'
-      security:
-        - oauth2:
-            - applybuy-checkout-service:gdpr:read
-
-  /transactions/search:
-    get:
-      summary: Search transaction summaries
-      operationId: transactionSummarySearch
-      tags: [Transactions, Summary]
-      parameters:
-        - name: q
-          in: query
-          schema: { type: string }
-        - name: page
-          in: query
-          schema: { type: integer }
-        - name: limit
-          in: query
-          schema: { type: integer }
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TransactionSummarySearchResponse'
-      security:
-        - oauth2:
-            - applybuy-checkout-service:transactions:read
-
-  /transactions/{transactionId}:
-    get:
-      summary: Get transaction summary by ID
-      operationId: transactionSummaryGetByTransactionID
-      tags: [Transactions, Summary]
-      parameters:
-        - name: transactionId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TransactionSummaryResponse'
-      security:
-        - oauth2:
-            - applybuy-checkout-service:transactions:read
-
   /transactions:
     get:
       summary: List transactions by merchant
       operationId: transactionListByMerchant
       tags: [Transactions]
       parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+        - $ref: '#/components/parameters/XAuthType'
         - name: merchantId
           in: query
           required: true
-          schema: { type: string }
+          schema:
+            type: string
         - name: from
           in: query
-          schema: { type: string, format: date-time }
+          schema:
+            type: string
+            format: date-time
         - name: to
           in: query
-          schema: { type: string, format: date-time }
+          schema:
+            type: string
+            format: date-time
         - name: page
           in: query
-          schema: { type: integer }
+          schema:
+            type: integer
         - name: limit
           in: query
-          schema: { type: integer }
+          schema:
+            type: integer
       responses:
         "200":
           description: Success
@@ -300,6 +240,9 @@ paths:
       summary: Void payment
       operationId: postVoid
       tags: [Payments, Void]
+      parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
+        - $ref: '#/components/parameters/XAuthType'
       requestBody:
         required: true
         content:
@@ -322,6 +265,8 @@ paths:
       summary: Webhook order management
       operationId: webhookOrderManagement
       tags: [Webhook, Management]
+      parameters:
+        - $ref: '#/components/parameters/XCorrelationId'
       requestBody:
         required: true
         content:
@@ -340,6 +285,21 @@ paths:
             - applybuy-checkout-service:webhook:write
 
 components:
+
+  parameters:
+    XCorrelationId:
+      name: X-Correlation-Id
+      in: header
+      required: false
+      schema:
+        type: string
+
+    XAuthType:
+      name: X-Auth-Type
+      in: header
+      required: false
+      schema:
+        type: string
 
   schemas:
     RedirectInfoResponse: { type: object }
